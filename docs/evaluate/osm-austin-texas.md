@@ -4,14 +4,6 @@
 
 **Source**: Shapefiles for the city of Austin, TX were generated why the [HOT Export](https://export.hotosm.org/en/v3/exports/19a3b1c2-a9c7-4613-8c26-596caa9ae5b5) online service, then converted to GeoJSON using [Fiona](https://pypi.org/project/Fiona/).
 
-```bash
-curl -sLO https://export.hotosm.org/downloads/8a430b3a-7b16-4c88-9b36-7da085b4d141/austin-tx_shp.zip
-unzip austin-tx_shp.zip -d osm-austin
-cd osm-austin
-fio cat austin-tx_planet_osm_polygon_polygons.shp > austin-tx.geoson
-grep -i "Harmon Avenue" austin-tx.geojson |grep -i 3400
-```
-
 ### Relevant data
 
 | Property | Description |
@@ -35,6 +27,18 @@ $ jq '[ .features[] | select(.properties.building == "apartments")] |length' aus
 I am not sure how to programatically regenerate the data set.
 
 ### Feature example
+
+Retrieve the dataset programmatically, convert it to geojson and extract the Sabina Appartments feature:
+
+```bash
+curl -sLO https://export.hotosm.org/downloads/8a430b3a-7b16-4c88-9b36-7da085b4d141/austin-tx_shp.zip
+unzip austin-tx_shp.zip -d osm-austin
+cd osm-austin
+fio cat austin-tx_planet_osm_polygon_polygons.shp > austin-tx.geoson
+grep -i "Harmon Avenue" austin-tx.geojson |grep -i 3400
+```
+
+Sabina Appartments:
 
 ```json
 {
