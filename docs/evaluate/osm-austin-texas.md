@@ -2,7 +2,7 @@
 
 ## Evaluation
 
-**Source**: Shapefiles for the city of Austin, TX were generated why the [HOT Export](https://export.hotosm.org/en/v3/) online service, then converted to GeoJSON using [Fiona](https://pypi.org/project/Fiona/).
+**Source**: Shapefiles for the city of Austin, TX were generated why the [HOT Export](https://export.hotosm.org/en/v3/exports/19a3b1c2-a9c7-4613-8c26-596caa9ae5b5) online service, then converted to GeoJSON using [Fiona](https://pypi.org/project/Fiona/).
 
 ### Relevant data
 
