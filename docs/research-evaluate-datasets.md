@@ -32,3 +32,19 @@ Sources:
 * Austin Open Data Portal: [Building Footprints Year 2013](evaluate/opd-building-footprints-2013.md)
 * OpenStreeMap: [Austin, TX](evaluate/osm-austin-texas.md)
 * TCAD: [Austin, TX](evaluate/travis-county-appraisal-database.md)
+
+## Final data set
+
+This is what the final data set should look like and where the data comes from:
+
+|Column|Source|
+|---|---|
+|Building info|TCAD - *aggregated data*|
+|# of units(*)||
+|# of occupants||
+|Land area (sqft)|TCAD|
+|Ground floor area (sqft)|OSM - *computed from geometry*|
+|Ground floor/Land Ratio| *computed* |
+|Ground floor/# of occupants| *computed* |
+
+(*) The # of units is not necessary per say, but would help in case we cannot get the number of occupants per building.
