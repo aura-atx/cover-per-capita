@@ -8,17 +8,34 @@ The table and column descriptions can be found here: [Appraisal-Export-Layout](h
 
 ### Relevant data
 
-The table which contains the information we are interested in is `PUBLIC.PROP`. The table structure is BIG. There are 400+ columns. Each entry is roughly 35KB.
-
 | Property | Description |
 |---|---|
 |entry count|432173|
-|LEGAL_ACREAGE|Property acreage (must be divided by 10000)|
+|SITUS_NUM|Property number|
+|SITUS_STREET|Street name|
+|SITUS_STREET_SUFFIX|Street suffix|
 |LAND_ACRES|Sum of the acres based on land segments (must be divided by 10000)|
+
+The table which contains the information we are interested in is `PUBLIC.PROP`. 
+The table structure is BIG. There are 400+ columns. Each entry is roughly 35KB.
+
+
+Here is the query to retrieve the relevant values from the data set:
+```sql
+SELECT 
+	SITUS_NUM, 
+	LOWER(RTRIM(SITUS_STREET)) AS SITUS_STREET, 
+	LOWER(RTRIM(SITUS_STREET_SUFFIX)) AS SITUS_STREET_SUFFIX,
+	(LAND_ACRES / 10000.000) AS LAND_ACRES
+FROM 
+	PUBLIC.PROP 
+WHERE 
+	PROP_TYPE_CD LIKE 'R%'
+  ```
 
 ### Other findings
 
-None.
+The `SITUS_STREET_SUFFIX` need to be normalized. See the [List of used suffixes] and their meaning.
 
 #### Feature example
 
@@ -438,3 +455,74 @@ None.
   ]
 }
 ```
+
+## Extras
+
+### List of used suffixes
+
+|SITUS_STREET_SUFFIX|Meaning|
+|-------------------|---|
+||
+|(pvt)|
+|ave|avenue|
+|bend|
+|blf|
+|blvd|
+|bnd|
+|ci|
+|cir|
+|clf|
+|cove|
+|crk|
+|crt|
+|ct|
+|cv|
+|cyn|
+|dr|
+|drive|
+|dv|
+|flds|
+|hl|
+|holw|
+|hwy|
+|hy|
+|ln|
+|lndg|
+|loop|
+|lp|
+|mdws|
+|n|
+|park|
+|parkway|
+|pass|
+|path|
+|pkwy|
+|pl|
+|place|
+|plc|
+|ps|
+|pt|
+|pvt|
+|rd|road|
+|rdg|
+|rg|
+|row|
+|run|
+|skwy|
+|sq|
+|st|
+|ter|
+|terr|
+|tr|
+|trc|
+|trce|
+|trl|
+|view|
+|vista|
+|vly|
+|vw|
+|walk|
+|way|way|
+|wy|
+|xing|corssing|
+
