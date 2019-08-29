@@ -462,7 +462,6 @@ The `SITUS_STREET_SUFFIX` need to be normalized. See the [List of used suffixes]
 
 |SITUS_STREET_SUFFIX|Meaning|
 |-------------------|---|
-||
 |(pvt)|
 |ave|avenue|
 |bend|
@@ -524,5 +523,5 @@ The `SITUS_STREET_SUFFIX` need to be normalized. See the [List of used suffixes]
 |walk|
 |way|way|
 |wy|
-|xing|corssing|
+|xing|crossing|
 
