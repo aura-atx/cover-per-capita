@@ -13,8 +13,8 @@ The table which contains the information we are interested in is `PUBLIC.PROP`. 
 | Property | Description |
 |---|---|
 |entry count|432173|
-|LEGAL_ACREAGE|Property acreage (must be divided by 1000)|
-|LAND_ACRES|Sum of the acres based on land segments (must be divided by 1000)|
+|LEGAL_ACREAGE|Property acreage (must be divided by 10000)|
+|LAND_ACRES|Sum of the acres based on land segments (must be divided by 10000)|
 
 ### Other findings
 
