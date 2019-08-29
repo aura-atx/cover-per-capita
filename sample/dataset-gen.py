@@ -35,8 +35,8 @@ def main():
     print(tcad_df.head())
 
     # Ensure exact match.
-    join_column = tcad_df.where(tcad_df.addr == osm_df.addr)
-    assert len(join_column) == 1
+    join_df = tcad_df.where(tcad_df.addr == osm_df.addr)
+    assert len(join_df) == 1
 
     # Create a new empty dataframe.
     ndf = pd.DataFrame(
@@ -44,16 +44,18 @@ def main():
             "info",
             "units",
             "occupants",
-            "land area",
-            "ground floor area",
-            "land floor ratio",
-            "impervious cover per capita",
+            "acreage",
+            "area",
+            "area_acreage_ratio",
+            "impervious_cover_per_capita",
         ]
     )
 
     # Populate it.
-    ndf["info"] = osm_df.addr
-    ndf["land area"] = tcad_df.LEGAL_ACREAGE / 1000
+    ndf["info"] = join_df.addr
+    ndf["acreage"] = join_df.LEGAL_ACREAGE / 1000
+
+    print(ndf.head())
 
 
 if __name__ == "__main__":
