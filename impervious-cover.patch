@@ -1,0 +1,237 @@
+diff --git a/.gitignore b/.gitignore
+index 920c705..9631d73 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,2 +1,73 @@
+-venv/
++*$py.class
++*.cover
++*.egg
++*.egg-info/
++*.log
++*.manifest
++*.mo
++*.pot
++*.py[cod]
++*.sage.py
++*.so
++*.spec
++.Python
++.cache
++.coverage
++.coverage.*
++.dmypy.json
++.eggs/
++.env
++.hypothesis/
++.installed.cfg
++.ipynb_checkpoints
++.mypy_cache/
++.nox/
++.pyre/
++.pytest_cache/
++.python-version
++.ropeproject
++.scrapy
++.spyderproject
++.spyproject
++.tox/
++.venv
+ .vscode/
++.webassets-cache
++/site
++ENV/
++MANIFEST
++__pycache__/
++__pycache__/o
++build/
++celerybeat-schedule
++coverage.xml
++db.sqlite3
++db.sqlite3-journal
++develop-eggs/
++dist/
++dmypy.json
++docs/_build/
++downloads/
++eggs/
++env.bak/
++env/
++htmlcov/
++instance/
++ipython_config.py
++lib/
++lib64/
++local_settings.py
++nosetests.xml
++output.csv
++parts/
++pip-delete-this-directory.txt
++pip-log.txt
++pip-wheel-metadata/
++profile_default/
++sdist/
++share/python-wheels/
++target/
++var/
++venv.bak/
++venv/
++wheels/
+diff --git a/requirements-dev.txt b/requirements-dev.txt
+new file mode 100644
+index 0000000..0456e9d
+--- /dev/null
++++ b/requirements-dev.txt
+@@ -0,0 +1,2 @@
++black
++bpython
+diff --git a/requirements.txt b/requirements.txt
+index 7a2f9ab..e050c12 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1 +1,2 @@
++area==1.1.1
+ geopandas==0.5.1
+diff --git a/sample/dataset-gen.py b/sample/dataset-gen.py
+index ace0ce6..30d2eb5 100644
+--- a/sample/dataset-gen.py
++++ b/sample/dataset-gen.py
+@@ -6,15 +6,26 @@ Links:
+ - https://geopandas.readthedocs.io/en/latest/gallery/create_geopandas_from_pandas.html
+ - https://github.com/scisco/area
+ """
++import json
++
++from area import area as calarea
+ import geopandas as gpd
+ import pandas as pd
+-import pyproj
+-from area import area as calarea
+-import json
++
+ 
+ OSM_SAMPLE_FILE = "osm-sample.geojson"
+ TCAD_SAMPLE_FILE = "tcad-sample.json"
+-M_TO_FT = 10.7639
++
++
++def area(geometry):
++    """Compute the area of a polygon."""
++    SQM_TO_SQFT = 10.7639
++    area_list = []
++    g = geometry.to_json()
++    polygon = json.loads(g)
++    coordinates = polygon["features"][0]["geometry"]
++    area_list.append(calarea(coordinates) * SQM_TO_SQFT)
++    return area_list
+ 
+ 
+ def main():
+@@ -22,54 +33,47 @@ def main():
+     # Load the data sets.
+     osm_df = gpd.read_file(OSM_SAMPLE_FILE)
+     tcad_df = pd.read_json(TCAD_SAMPLE_FILE)
+-    osm_file = open(OSM_SAMPLE_FILE)
+-    osm_json = json.load(osm_file)
+-    
+-    # Calculate the building area
+-    area_list = []
+-    for i in range(len(osm_json['features'])):
+-        #print(osm_json['features'][i]['geometry'])        
+-        #print(calarea(osm_json['features'][i]['geometry'])*M_TO_FT)
+-        area_list.append(calarea(osm_json['features'][i]['geometry'])*M_TO_FT)
+-    osm_df["building area"] = area_list
+-    
++
++    # Calculate the building area.
++    osm_df["building area"] = area(osm_df.geometry)
++
+     # Create the lookup column.
+-    osm_df["addr"] = (
+-        osm_df.addr_house.values[0].strip().lower()
+-        + " "
+-        + osm_df.addr_stree.values[0].strip().lower()
+-    )
+-    
++    osm_df["addr"] = osm_df.addr_house.values[0].strip() + " " + osm_df.addr_stree.values[0].strip()
++    osm_df["addr"] = osm_df["addr"].str.lower()
+     tcad_df["addr"] = (
+         tcad_df.SITUS_NUM.map(str)
+         + " "
+-        + tcad_df.SITUS_STREET.values[0].strip().lower()
++        + tcad_df.SITUS_STREET.values[0].strip()
+         + " "
+-        + tcad_df.SITUS_STREET_SUFFIX.values[0].strip().lower()
++        + tcad_df.SITUS_STREET_SUFFIX.values[0].strip()
+     )
+-    #print(tcad_df.head())
++    tcad_df["addr"] = tcad_df["addr"].str.lower()
+ 
+-    # Ensure exact match.
+-    join_column = tcad_df.where(tcad_df.addr == osm_df.addr)
+-    assert len(join_column) == 1
++    # Merge on exact matches only.
++    join_column = pd.merge(tcad_df, osm_df, on="addr")
+ 
+     # Create a new empty dataframe.
+     ndf = pd.DataFrame(
+         columns=[
+-            "info",
++            "address",
+             "units",
+             "occupants",
+-            "land area",
++            "acreage",
+             "ground floor area",
+-            "land floor ratio",
++            "land/floor ratio",
+             "impervious cover per capita",
+         ]
+     )
+ 
+     # Populate it.
+-    ndf["info"] = osm_df.addr
+-    ndf["land area"] = tcad_df.LEGAL_ACREAGE / 1000
++    ndf["address"] = osm_df.addr
++    ndf["acreage"] = (tcad_df.LEGAL_ACREAGE / 10000) * 43560
+     ndf["ground floor area"] = osm_df["building area"]
+-    
++    ndf["land/floor ratio"] = ndf["ground floor area"] / ndf["acreage"]
++
++    # Save it.
++    ndf.to_csv("output.csv")
++
++
+ if __name__ == "__main__":
+     main()
+diff --git a/sample/pyproject.toml b/sample/pyproject.toml
+new file mode 100644
+index 0000000..c228223
+--- /dev/null
++++ b/sample/pyproject.toml
+@@ -0,0 +1,2 @@
++[tool.black]
++line-length = 119
+diff --git a/tasks.py b/tasks.py
+new file mode 100644
+index 0000000..94cdaf6
+--- /dev/null
++++ b/tasks.py
+@@ -0,0 +1,17 @@
++from invoke import task
++import nox
++
++
++@task(default=True)
++def setup(c):
++    """Setup the developper environment."""
++    c.run(f"nox -f {__name__}.py --envdir .")
++
++
++@nox.session()
++def venv(session):
++    """Setup the developper environment."""
++    # Install dependencies.
++    session.install("--upgrade", "pip", "setuptools")
++    session.install("-r", "requirements.txt")
++    session.install("-r", "requirements-dev.txt")

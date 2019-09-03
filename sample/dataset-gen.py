@@ -6,15 +6,26 @@ Links:
 - https://geopandas.readthedocs.io/en/latest/gallery/create_geopandas_from_pandas.html
 - https://github.com/scisco/area
 """
+import json
+
+from area import area as calarea
 import geopandas as gpd
 import pandas as pd
-import pyproj
-from area import area as calarea
-import json
+
 
 OSM_SAMPLE_FILE = "osm-sample.geojson"
 TCAD_SAMPLE_FILE = "tcad-sample.json"
-M_TO_FT = 10.7639
+
+
+def area(geometry):
+    """Compute the area of a polygon."""
+    SQM_TO_SQFT = 10.7639
+    area_list = []
+    g = geometry.to_json()
+    polygon = json.loads(g)
+    coordinates = polygon["features"][0]["geometry"]
+    area_list.append(calarea(coordinates) * SQM_TO_SQFT)
+    return area_list
 
 
 def main():
@@ -22,54 +33,47 @@ def main():
     # Load the data sets.
     osm_df = gpd.read_file(OSM_SAMPLE_FILE)
     tcad_df = pd.read_json(TCAD_SAMPLE_FILE)
-    osm_file = open(OSM_SAMPLE_FILE)
-    osm_json = json.load(osm_file)
-    
-    # Calculate the building area
-    area_list = []
-    for i in range(len(osm_json['features'])):
-        #print(osm_json['features'][i]['geometry'])        
-        #print(calarea(osm_json['features'][i]['geometry'])*M_TO_FT)
-        area_list.append(calarea(osm_json['features'][i]['geometry'])*M_TO_FT)
-    osm_df["building area"] = area_list
-    
+
+    # Calculate the building area.
+    osm_df["building area"] = area(osm_df.geometry)
+
     # Create the lookup column.
-    osm_df["addr"] = (
-        osm_df.addr_house.values[0].strip().lower()
-        + " "
-        + osm_df.addr_stree.values[0].strip().lower()
-    )
-    
+    osm_df["addr"] = osm_df.addr_house.values[0].strip() + " " + osm_df.addr_stree.values[0].strip()
+    osm_df["addr"] = osm_df["addr"].str.lower()
     tcad_df["addr"] = (
         tcad_df.SITUS_NUM.map(str)
         + " "
-        + tcad_df.SITUS_STREET.values[0].strip().lower()
+        + tcad_df.SITUS_STREET.values[0].strip()
         + " "
-        + tcad_df.SITUS_STREET_SUFFIX.values[0].strip().lower()
+        + tcad_df.SITUS_STREET_SUFFIX.values[0].strip()
     )
-    #print(tcad_df.head())
+    tcad_df["addr"] = tcad_df["addr"].str.lower()
 
-    # Ensure exact match.
-    join_column = tcad_df.where(tcad_df.addr == osm_df.addr)
-    assert len(join_column) == 1
+    # Merge on exact matches only.
+    join_column = pd.merge(tcad_df, osm_df, on="addr")
 
     # Create a new empty dataframe.
     ndf = pd.DataFrame(
         columns=[
-            "info",
+            "address",
             "units",
             "occupants",
-            "land area",
+            "acreage",
             "ground floor area",
-            "land floor ratio",
+            "land/floor ratio",
             "impervious cover per capita",
         ]
     )
 
     # Populate it.
-    ndf["info"] = osm_df.addr
-    ndf["land area"] = tcad_df.LEGAL_ACREAGE / 1000
+    ndf["address"] = osm_df.addr
+    ndf["acreage"] = (tcad_df.LEGAL_ACREAGE / 10000) * 43560
     ndf["ground floor area"] = osm_df["building area"]
-    
+    ndf["land/floor ratio"] = ndf["ground floor area"] / ndf["acreage"]
+
+    # Save it.
+    ndf.to_csv("output.csv")
+
+
 if __name__ == "__main__":
     main()
