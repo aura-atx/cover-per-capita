@@ -16,20 +16,19 @@ The table and column descriptions can be found here: [Appraisal-Export-Layout](h
 |SITUS_STREET_SUFFIX|Street suffix|
 |LAND_ACRES|Sum of the acres based on land segments (must be divided by 10000)|
 
-The table which contains the information we are interested in is `PUBLIC.PROP`. 
+The table which contains the information we are interested in is `PUBLIC.PROP`.
 The table structure is BIG. There are 400+ columns. Each entry is roughly 35KB.
-
 
 Here is the query to retrieve the relevant values from the data set:
 ```sql
-SELECT 
-	SITUS_NUM, 
-	LOWER(RTRIM(SITUS_STREET)) AS SITUS_STREET, 
+SELECT
+	LOWER(RTRIM(SITUS_NUM)),
+	LOWER(RTRIM(SITUS_STREET)) AS SITUS_STREET,
 	LOWER(RTRIM(SITUS_STREET_SUFFIX)) AS SITUS_STREET_SUFFIX,
 	(LAND_ACRES / 10000.000) AS LAND_ACRES
-FROM 
-	PUBLIC.PROP 
-WHERE 
+FROM
+	PUBLIC.PROP
+WHERE
 	PROP_TYPE_CD LIKE 'R%'
   ```
 

@@ -10,6 +10,7 @@
 *.sage.py
 *.so
 *.spec
+.DS_Store
 .Python
 .cache
 .coverage
@@ -52,6 +53,7 @@ eggs/
 env.bak/
 env/
 htmlcov/
+input_datasets/
 instance/
 ipython_config.py
 lib/
