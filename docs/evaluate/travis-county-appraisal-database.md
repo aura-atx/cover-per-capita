@@ -11,9 +11,11 @@ The table and column descriptions can be found here: [Appraisal-Export-Layout](h
 | Property | Description |
 |---|---|
 |entry count|432173|
+|GEO_ID|Geographic ID (use to drop duplicate entries)|
 |SITUS_NUM|Property number|
 |SITUS_STREET|Street name|
 |SITUS_STREET_SUFFIX|Street suffix|
+|SITUS_ZIP|Zipcode|
 |LAND_ACRES|Sum of the acres based on land segments (must be divided by 10000)|
 
 The table which contains the information we are interested in is `PUBLIC.PROP`.
@@ -22,19 +24,26 @@ The table structure is BIG. There are 400+ columns. Each entry is roughly 35KB.
 Here is the query to retrieve the relevant values from the data set:
 ```sql
 SELECT
-	LOWER(RTRIM(SITUS_NUM)),
+	LOWER(RTRIM(GEO_ID)) AS GEO_ID,
+	MIN(LOWER(RTRIM(SITUS_NUM))) AS SITUS_NUM,
 	LOWER(RTRIM(SITUS_STREET)) AS SITUS_STREET,
 	LOWER(RTRIM(SITUS_STREET_SUFFIX)) AS SITUS_STREET_SUFFIX,
-	(LAND_ACRES / 10000.000) AS LAND_ACRES
+	LOWER(RTRIM(SITUS_ZIP)) AS SITUS_ZIP,
+	MIN(LAND_ACRES / 10000.000) AS LAND_ACRES
 FROM
 	PUBLIC.PROP
 WHERE
 	PROP_TYPE_CD LIKE 'R%'
-  ```
+	AND GEO_ID IS NOT NULL
+	AND GEO_ID != ''
+GROUP BY LOWER(RTRIM(GEO_ID)), LOWER(RTRIM(SITUS_STREET)), LOWER(RTRIM(SITUS_STREET_SUFFIX)), LOWER(RTRIM(SITUS_ZIP))
+```
 
 ### Other findings
 
 The `SITUS_STREET_SUFFIX` need to be normalized. See the [List of used suffixes] and their meaning.
+
+We found 303 entries with duplicated `GEO_ID`, but completely different addresses (use `LOWER(RTRIM(SITUS_NUM)) AS SITUS_NUM,` to replicate).
 
 #### Feature example
 

@@ -24,15 +24,7 @@ import pandas as pd
 OSM_SAMPLE_FILE = "input_datasets/osm-austin/austin-tx_planet_osm_polygon_polygons.shp"
 TCAD_SAMPLE_FILE = "input_datasets/tcad/tcad.csv"
 ACRE_TO_SQFT = 43560
-
-
-def compute_area(geometry):
-    """Compute the area of a polygon."""
-    SQM_TO_SQFT = 10.7639
-    g = geometry.to_json()
-    polygon = json.loads(g)
-    coordinates = polygon["features"][0]["geometry"]
-    return calarea(coordinates) * SQM_TO_SQFT
+SQM_TO_SQFT = 10.7639
 
 
 def normalize_suffix(suffix):
@@ -107,49 +99,70 @@ def normalize_suffix(suffix):
     return s if s else suffix
 
 
+def prepare_tcad_data(df):
+    """Prepare and clean up the TCAD DataFrame."""
+    # Remove entries with duplcated GEO_ID.
+    df.drop_duplicates(subset=["GEO_ID"], inplace=True)
+
+    # Normalize suffixes.
+    df["SITUS_STREET_SUFFIX"] = df.SITUS_STREET_SUFFIX.apply(normalize_suffix)
+
+    # Create the lookup column.
+    df["addr"] = (
+        df.SITUS_NUM.str.strip() + " " + df.SITUS_STREET.str.strip() + " " + df.SITUS_STREET_SUFFIX.str.strip()
+    )
+    df["addr"] = df["addr"].str.lower()
+
+    # Remove entries with duplcated addr.
+    df.drop_duplicates(subset=["addr"], inplace=True)
+
+
+def prepare_osm_data(df):
+    """Prepare and clean up the OSM DataFrame."""
+    # Create the lookup column.
+    df["addr"] = df.addr_house.str.strip() + " " + df.addr_stree.str.strip()
+    df["addr"] = df["addr"].str.lower()
+
+    # Remove entries with duplcated addr.
+    df.drop_duplicates(subset=["addr"], inplace=True)
+
+    # Calculate the building footprint.
+    df["footprint"] = df.geometry.map(lambda x: calarea(x.__geo_interface__) * SQM_TO_SQFT)
+
+    # Filter by building types.
+    df = df.loc[(df["building"] == "house") | (df["building"] == "apartments")]
+    return df
+
+
 def main():
     """Define the main function."""
     # Load the data sets.
     osm_df = gpd.read_file(OSM_SAMPLE_FILE)
     tcad_df = pd.read_csv(TCAD_SAMPLE_FILE)
-    # , dtype={"PROP_ID": int, "GEO_ID": int}
 
-    # Calculate the building area.
-    # Note(rgreinho): I could not find how to extract the right information from a Shapely Polygon, therefore I could
-    #   not the apply() function to the whole DataSeries.
-    # osm_df["building area"] = osm_df.geometry.apply(compute_area)
-    osm_df["footprint"] = compute_area(osm_df.geometry)
-
-    # Normalize suffixes.
-    # tcad_df["SITUS_STREET_SUFFIX"] = normalize_suffix(tcad_df.SITUS_STREET_SUFFIX)
-    tcad_df["SITUS_STREET_SUFFIX"] = tcad_df.SITUS_STREET_SUFFIX.apply(normalize_suffix)
-
-    # Create the lookup column.
-    osm_df["addr"] = osm_df.addr_house.str.strip() + " " + osm_df.addr_stree.str.strip()
-    osm_df["addr"] = osm_df["addr"].str.lower()
-    tcad_df["addr"] = (
-        tcad_df.SITUS_NUM.map(str)
-        + " "
-        + tcad_df.SITUS_STREET.str.strip()
-        + " "
-        + tcad_df.SITUS_STREET_SUFFIX.str.strip()
-    )
-    tcad_df["addr"] = tcad_df["addr"].str.lower()
+    # Data cleanup.
+    prepare_tcad_data(tcad_df)
+    osm_df = prepare_osm_data(osm_df)
 
     # Merge on exact matches only.
     joined = pd.merge(tcad_df, osm_df, on="addr")
-    # breakpoint()
+
+    # DEBUG.
+    print(f"OSM shape: {osm_df.shape}")
+    print(f"TCAD shape: {tcad_df.shape}")
+    print(f"Joined shape: {joined.shape}")
 
     # Create a new empty dataframe.
     ndf = pd.DataFrame(
         columns=[
             "geo_id",
             "address",
+            "type",
             "units",
             "occupants",
             "acreage",
             "footprint",
-            "building cover",
+            "impervious cover",
             "impervious cover per capita",
         ]
     )
@@ -157,9 +170,13 @@ def main():
     # Populate it.
     ndf["geo_id"] = joined.GEO_ID
     ndf["address"] = joined.addr
+    ndf["type"] = joined.building
     ndf["acreage"] = joined.LAND_ACRES * ACRE_TO_SQFT
     ndf["footprint"] = joined["footprint"]
-    ndf["building cover"] = ndf["footprint"] / ndf["acreage"]
+    ndf["impervious cover"] = ndf["footprint"] / ndf["acreage"]
+
+    # Clean it.
+    ndf.dropna(subset=["impervious cover"], inplace=True)
 
     # Save it.
     ndf.to_csv("output.csv")
