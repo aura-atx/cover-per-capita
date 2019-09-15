@@ -29,7 +29,7 @@ Sources:
 
 ## Evaluations
 
-* Austin Open Data Portal: [Building Footprints Year 2013](evaluate/opd-building-footprints-2013.md)
+* Austin Open Data Portal: [Building Footprints Year 2013](evaluate/odp-building-footprints-2013.md)
 * OpenStreeMap: [Austin, TX](evaluate/osm-austin-texas.md)
 * TCAD: [Austin, TX](evaluate/travis-county-appraisal-database.md)
 
