@@ -18,6 +18,7 @@ import json
 
 from area import area as calarea
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 
 
@@ -130,7 +131,7 @@ def prepare_osm_data(df):
     df["footprint"] = df.geometry.map(lambda x: calarea(x.__geo_interface__) * SQM_TO_SQFT)
 
     # Filter by building types.
-    df = df.loc[(df["building"] == "house") | (df["building"] == "apartments")]
+    df = df.loc[(df["building"] != "yes")]
     return df
 
 
@@ -176,6 +177,7 @@ def main():
     ndf["impervious cover"] = ndf["footprint"] / ndf["acreage"]
 
     # Clean it.
+    ndf.replace([np.inf, -np.inf], np.nan, inplace=True)
     ndf.dropna(subset=["impervious cover"], inplace=True)
 
     # Save it.
