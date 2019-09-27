@@ -18,7 +18,7 @@ Relevant facts for our effort:
 |---|---|---|
 |# of units| 298 |
 |Land area| 2.565 acres | 111731.5 sqft |
-|Ground floor area| 0.354 acres | 15443 sqft |
+|Ground floor area| 1.978 acres | 86187 sqft |
 
 Sources:
 
@@ -42,9 +42,13 @@ This is what the final data set should look like and where the data comes from:
 |Building info|TCAD - *aggregated data*|
 |# of units(*)||
 |# of occupants||
-|Land area (sqft)|TCAD|
-|Ground floor area (sqft)|OSM - *computed from geometry*|
-|Ground floor/Land Ratio| *computed* |
-|Ground floor/# of occupants| *computed* |
+|acreage (sqft)|TCAD|
+|footprint (sqft)|OSM - *computed from geometry*|
+|impervious cover (%)| *computed* |
+|impervious cover per occupants| *computed* |
 
 (*) The # of units is not necessary per say, but would help in case we cannot get the number of occupants per building.
+
+## Conclusions
+
+The [detailed conclusions](conclusion.md) of our research can be found on the dedicated page.
